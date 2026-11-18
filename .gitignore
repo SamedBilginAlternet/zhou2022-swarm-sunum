@@ -1,0 +1,4 @@
+node_modules/
+konusma.json
+*.tmp
+~$*.pptx
