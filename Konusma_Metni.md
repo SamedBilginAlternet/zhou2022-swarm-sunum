@@ -2,7 +2,7 @@
 
 Zhou vd. (2022), Science Robotics 7, eabm5954. Sunan: Samed Bilgin · 251281053.
 
-Ana slaytlarda yaklaşık 27 dakika; atlanabilir işaretli slaytlar geçilirse yaklaşık 22 dakika. Ek A ve Ek B yalnızca soru gelirse açılır. Parantez içindeki notlar sahne yönergesidir.
+Ana slaytlarda yaklaşık 33 dakika; atlanabilir işaretli slaytlar geçilirse yaklaşık 27 dakika. Ek A ve Ek B yalnızca soru gelirse açılır. Parantez içindeki notlar sahne yönergesidir.
 
 ## 1. Ormanda kendi başına uçan avuç içi dron sürüsü
 
@@ -92,7 +92,7 @@ Ne kadar küçük olduğunu biraz somutlaştıralım. Motorlar arası çapraz me
 
 *≈ 50 sn*
 
-Sistemin mimarisi bu. Kutunun içi tek bir dron ve her dron aynı yapıda. Kamera ortamı görüyor, haritalama modülü bir doluluk haritası çıkarıyor, planlayıcı yörüngeyi hesaplıyor, kontrol kartı da o yörüngeyi izliyor. Konum kamera ve IMU ile bulunuyor; zamanla biriken hata UWB ile düzeltiliyor. Dikkat edin, ortada merkez bir bilgisayar yok. Dronlar arasındaki tek bağlantı sağdaki turuncu kesik çizgiler: her dron kendi planladığı yörüngeyi kablosuz ağda yayınlıyor. Böylece herkes komşusunun birkaç saniye sonra nerede olacağını biliyor. Merkez olmadığı için sistem tek bir bilgisayara da bağımlı değil.
+Sistemin mimarisi bu. Kutunun içi tek bir dron ve her dron aynı yapıda. Kamera ortamı görüyor, haritalama modülü bir doluluk haritası çıkarıyor, planlayıcı yörüngeyi hesaplıyor, kontrol kartı da o yörüngeyi izliyor. Konum kamera ve IMU ile bulunuyor; zamanla biriken hata UWB ile düzeltiliyor. Dikkat edin, ortada merkez bir bilgisayar yok. Dronlar arasındaki tek bağlantı sağdaki turuncu kesik çizgiler: her dron kendi planladığı yörüngeyi kablosuz ağda yayınlıyor. Böylece herkes komşusunun birkaç saniye sonra nerede olacağını biliyor. Merkez olmadığı için sistem tek bir bilgisayara da bağımlı değil. Bu yayın işine birazdan ayrı bir bölümde döneceğiz, çünkü sürüyü sürü yapan şey o.
 
 ## 16. Bir bilmece: iki dron aynı anda tek bir dar boşluğa gelirse ne yapmalı?
 
@@ -130,123 +130,170 @@ Sistemi bu kadar esnek yapan şey bu formül. Fikir çok basit: dronun uyması g
 
 Planlayıcının çalışma döngüsü de şöyle. Kullanıcı ya da üst seviye bir yazılım bir hedef veriyor. Planlayıcı o yöne doğru yakında bir ara hedef seçiyor. Sonra bir optimizasyon döngüsü başlıyor: L-BFGS denen çözücü bir aday yörünge öneriyor, ceza hesaplanıyor, çözücü yörüngeyi düzeltiyor ve bu birkaç kez dönüyor. Sonuçta çıkan yörünge dron tarafından izleniyor. Bir iki saniye geçince ya da dron yeni bir engel görünce her şey baştan başlıyor. Yani dron hiçbir zaman eski bir plana körü körüne bağlı kalmıyor. Hedef de uçuş sırasında istendiği an değiştirilebiliyor; yazarlar buna hedef kovalama diyor.
 
-## 22. Deneyler: dört gerçek uçuş ve bir simülasyon karşılaştırması
+## 22. Dağıtık yapı: merkez yok, her dron kendi kararını veriyor
+
+*≈ 15 sn*
+
+Şimdiye kadar tek bir dronun beynine baktık. Ama bu bir sürü: on dron aynı ormanda, aynı anda uçuyor. Kim kime ne söylüyor, kim kimi bekliyor? Bu bölüm bence makalenin en az konuşulan ama en önemli kısmı, çünkü sürüyü sürü yapan şey bu.
+
+## 23. Merkezi sürüde tek bir beyin herkesi yönetir; burada her dron kendi planını yapıp komşularını dinler
+
+*≈ 55 sn*
+
+Önce iki yaklaşımı yan yana koyalım. Solda merkezi bir sürü: ortada güçlü bir bilgisayar var, bütün haritayı biliyor, herkesin yolunu o hesaplıyor ve dronlara gönderiyor. Bir orkestra gibi düşünün; şef herkesin ne zaman çalacağını söylüyor. Sorun şu: ormanda önceden bir harita yok, hesap uzun sürüyor ve şef düşerse müzik duruyor. Makale bu tür iki planlayıcıyı, SCP ve RBP'yi, ek malzemede deniyor; ikisi de küresel harita ve çevrimdışı hesap istiyor. Sağda bu çalışma: şef yok. Her dron kendi gözüyle görüyor, kendi haritasını çıkarıyor, kendi yolunu planlıyor. Dronlar arasındaki tek bağ turuncu kesik çizgiler, yani yörüngelerini birbirine yayınlamaları. Bu daha çok kalabalık bir kaldırıma benziyor: kimse kimseye emir vermiyor, herkes yanındakilerin nereye gittiğine bakıp kendi yolunu seçiyor. Yazarlar, atıf yaptıkları robotik literatürüne dayanarak bu tür zayıf merkezli yapıların daha dayanıklı olduğunu, iletişim ya da GPS kesildiğinde bile iş görmeye devam edebildiğini söylüyor.
+
+## 24. İkinci bilmece: dronlar kablosuz ağda birbirine ne gönderiyor?
+
+*≈ 30 sn · zaman kısaysa atlanabilir*
+
+Bir bilmece daha. (Salona dönün.) Bu dronlar birbirine kablosuz ağ üzerinden ne gönderiyor sizce? A: gördükleri kamera görüntüsünü. B: çıkardıkları haritayı. C: sadece birkaç sayı, yani kendi yörüngelerini. Elinizi kaldırın. (Birkaç saniye bekleyin.) Ekrandaki ipucuna bakın: avuç içi bir dronun kablosuz bağlantısı sınırlı ve on dron aynı anda konuşuyor.
+
+## 25. Doğru cevap C: ağda yalnızca yörüngenin birkaç sayısı dolaşıyor; komşunun yakın geleceği bundan çıkıyor
+
+*≈ 55 sn*
+
+Doğru cevap C. Ağda dolaşan şey görüntü ya da harita değil, yörüngenin birkaç sayısı. Hatırlarsanız MINCO'da bir yörüngeyi tanımlamak için iki şey yetiyordu: ara noktalar ve her parçanın süresi. Dron j bunları ve yörüngeye başladığı anı yayınlıyor. Dron i bu sayıları alıyor ve MINCO ile yörüngeyi kendi tarafında çok hızlı biçimde yeniden kuruyor. Böylece j'nin şimdi, bir saniye sonra, üç saniye sonra nerede olacağını biliyor. Zamanlar ortak bir saate göre hizalanıyor; yoksa 'şimdi' her dron için farklı bir an olurdu. Birkaç saniyelik bilgi de yetiyor, çünkü her dron eski planı bitmeden yenisini yayınlıyor. Arkadaşınıza bütün gün çektiğiniz videoyu göndermek yerine 'saat üçte kafedeyim' diye yazmak gibi: çok az veri, ama tam ihtiyaç duyulan bilgi.
+
+## 26. Komşunun yörüngesi planlayıcıya bir ceza terimi olarak giriyor; güvenlik payı dikeyde daha geniş
+
+*≈ 55 sn*
+
+Peki dron, komşusunun yörüngesini öğrenince ne yapıyor? Hatırlarsanız her kural bir ceza terimiydi. Komşular da öyle: J_w terimi, her örnek anında her komşuya olan mesafeye bakıyor. Mesafe güvenlik payının altına inerse ceza hızla büyüyor ve planlayıcı yörüngeyi o bölgeden uzaklaştırıyor. Güvenlik bölgesinin şekline dikkat edin: yuvarlak değil, dikeyde uzun bir elips. Çünkü bir dronun tam altında uçmak tehlikeli; pervanelerin aşağı ittiği hava alttaki dronu sarsıyor. Bir de güzel bir ayrıntı var: kimse kimseye 'sen geç' demiyor. Her dron diğerlerinin planını sabit kabul edip kendi planını ona göre ayarlıyor; herkes bunu yaptığı için kaçınma karşılıklı oluyor. Yürüyen bir insan ya da bisiklet gibi hareketli engeller de aynı yolla ele alınıyor: hareketleri tahmin ediliyor ve sanal bir komşu gibi bu terime giriyorlar.
+
+## 27. Kimse kimseyi beklemiyor: her dron kendi zamanında planlıyor ve gelen yörüngeleri hesaba katıyor
+
+*≈ 55 sn*
+
+Sıradaki soru: bu planlama ne zaman oluyor? Herkes aynı anda mı planlıyor, yoksa sırayla mı? İkisi de değil; planlayıcı asenkron. Mavi bloklar her dronun planlama anları. Gördüğünüz gibi herkes kendi zamanında planlıyor ve planını yayınlıyor; kimse bir turun başlamasını ya da sırasının gelmesini beklemiyor. Turuncu oka bakın: Dron 1 yeni bir yörünge yayınladı, Dron 2 bunu aldığında kendi planıyla çakıştığını gördü ve hemen yeniden planladı. Arka planda sürekli çalışan bir güvenlik kontrolü var; yeniden planlama da yetmezse dron acil duruş yörüngesine geçiyor. Bunun güzel bir yan etkisi de var. Çok robotlu sistemlerde iki robotun birbirini sonsuza dek beklediği, kilitlenme denen bir sorun bilinir. Yazarlara göre gerçek dünyanın rastgeleliği ve asenkron planlama bunu büyük ölçüde kendiliğinden önlüyor.
+
+## 28. Paylaşılan bilgi dört işe yarıyor: çarpışmadan kaçınma, lidersiz formasyon, konum düzeltme, ortak takip
+
+*≈ 50 sn*
+
+Paylaşılan bilginin işi sadece çarpışmayı önlemek değil; aynı kanal dört iş görüyor. Birincisi, az önce gördüğümüz çarpışmadan kaçınma. İkincisi formasyon. Dikkat edin, lider bir dron yok. Her dron diğerlerinin yörüngelerine bakıp formasyonun şu an nerede olması gerektiğini kendisi hesaplıyor ve kendi köşesine gidiyor. Üçüncüsü konum düzeltme: dronlar UWB ile birbirine olan mesafeyi ölçüyor. Komşunun yerini zaten yörüngesinden bildiği için kendi konumundaki kaymayı düzeltebiliyor; ayrıntısı Ek B'de. Dördüncüsü takip deneyinde: dronlar hedef gözlemlerini paylaşıyor, böylece bir dronun kamerası kapansa bile diğerleri hedefi görmeye devam ediyor. Deneylerde bunların hepsini göreceğiz.
+
+## 29. İki ağ denendi: yönlendiricili yıldız ağ daha hızlı, eşler arası ağ büyük sürüye daha uygun
+
+*≈ 45 sn · zaman kısaysa atlanabilir*
+
+Bu bilgi hangi ağdan gidiyor? Yazarlar iki yapı deniyor. Solda evlerdeki gibi bir Wi-Fi: ortada bir yönlendirici var, bütün mesajlar onun üzerinden geçiyor. Bant genişliği daha yüksek. Sağda eşler arası, yani ad hoc bir ağ: aracı yok, dronlar doğrudan konuşuyor. Ek malzemedeki ölçümlere göre büyük sürüler için bu daha uygun. Dağıtık olmanın bir bedeli de var. Birincisi, uçuş başında herkesin koordinat sistemi kabaca aynı olmalı; yoksa konum düzeltme doğru bir yerden başlayamıyor. İkincisi, bu benim yorumum: her dron herkesin yörüngesini dinlediği için sürü büyüdükçe ağ ve hesap yükü de büyüyor. Tartışma bölümünde soracağım 100 dron sorusu tam da buraya bağlanıyor.
+
+## 30. Deneyler: dört gerçek uçuş ve bir simülasyon karşılaştırması
 
 *≈ 10 sn*
 
 Teori yeter, şimdi uçuşları izleyelim. Dört gerçek deney var, bir de simülasyonda rakiplerle bir karşılaştırma.
 
-## 23. 10 dron, 30 cm'den dar boşluklardan geçerek bambu ormanını zarar görmeden aştı
+## 31. 10 dron, 30 cm'den dar boşluklardan geçerek bambu ormanını zarar görmeden aştı
 
 *≈ 50 sn*
 
 İlk ve en önemli deney: bambu ormanı. Üstteki fotoğrafta beyaz halkaların içindeki küçük mavi ışıklar dronlar. On dron 65 metre ileride, ormanın dışındaki bir hedefe uçuyor. Bambuların arasındaki boşluk bazı yerlerde 30 santimetrenin altında. Bunu gözünüzde canlandırmak için: bir A4 kâğıdının uzun kenarı 29,7 santimetre. Yani dronlar, A4 kâğıdından dar aralıklardan geçiyor; üstelik çoğu zaman yanlarında komşuları varken. Bu deneyde hiçbir göreve özel ceza yok, sadece genel cezalar kullanılıyor.
 
-## 24. Yakından bakınca: dronlar hem bambulardan hem birbirlerinden kaçıyor
+## 32. Yakından bakınca: dronlar hem bambulardan hem birbirlerinden kaçıyor
 
 *≈ 45 sn*
 
 Biraz yaklaşalım. B panelinde turuncu ok, bir dronun geçtiği dar boşluğu gösteriyor. C panelinde dron bir bambudan kaçıyor; beyaz çizgi aradaki mesafe. D panelinde ise üç dron birbirinden kaçıyor. Burada bir ayrıntı var: makale, irtifa değiştirerek kaçmak gibi elle yazılmış kuralları bilerek kullanmıyor. Çünkü üstteki dronun pervane rüzgârı alttakini bozar ve gereksiz enerji harcanır. Dronlar sadece hızlarını ayarlayarak sıraya giriyor. Bilmecedeki C şıkkı, gerçek ormanda.
 
-## 25. Kayıtlı yörüngeler, dronların bir boşluktan ötekine düzgün ve doğrudan geçtiğini gösteriyor
+## 33. Kayıtlı yörüngeler, dronların bir boşluktan ötekine düzgün ve doğrudan geçtiğini gösteriyor
 
 *≈ 35 sn · zaman kısaysa atlanabilir*
 
 Bu da aynı uçuşun kuşbakışı haritası. Her dron kendi gördüğü haritayı çıkardı; burada hepsi birleştirilmiş. Renkler engellerin yüksekliğini gösteriyor; mor alanlar yüksek bambular. Soldan sağa uzanan ince çizgiler dronların gerçekte uçtuğu yollar. Dikkat edin, çizgilerde zikzak ya da ani dönüş yok. Reaktif yöntemlerde engelin hemen önünde keskin bir dönüş görürdünüz. Burada yörüngeler bir boşluktan ötekine düzgünce bağlanıyor.
 
-## 26. Tek bir formasyon cezası eklemek yetti: sürü ormanda formasyonunu korudu
+## 34. Tek bir formasyon cezası eklemek yetti: sürü ormanda formasyonunu korudu
 
 *≈ 40 sn*
 
 İkinci deney, ceza fikrinin ne kadar esnek olduğunu gösteriyor. Genel cezalara sadece bir tane formasyon cezası ekleniyor. Her dron formasyonda bir köşeye atanıyor ve o köşeden uzaklaştıkça ceza artıyor. Işık gösterilerinde formasyon görmüşsünüzdür, ama orada ortam boş ve her şey önceden programlı. Burada dronlar ağaçların, çalıların ve iki demir direğin arasından, haritasız uçuyor. Bir not: formasyon gözle seçilebilsin diye bu deneyde orman biraz daha seyrek seçilmiş.
 
-## 27. Engele gelince formasyon esniyor, geçince toparlanıyor; hız da kendiliğinden ayarlanıyor
+## 35. Engele gelince formasyon esniyor, geçince toparlanıyor; hız da kendiliğinden ayarlanıyor
 
 *≈ 50 sn*
 
 Bu karelerde formasyonu kuşbakışı görüyoruz; kırmızı-beyaz kesik çizgi formasyonun şekli. Birinci karede bir engel geliyor ve formasyon esniyor; bazı dronlar yana kaçıyor. İkinci karede engel geçilmiş ve formasyon yeniden toparlanmış. Üçüncü ve dördüncü karede aynı şey tekrar oluyor. Asıl sürpriz alttaki sarı kutuda: ağaçların arasından geçerken, 12. ve 25. saniyelerde, bütün sürü kendiliğinden yavaşlıyor; açık alana çıkınca yeniden hızlanıyor. Bunu kimse programlamadı. Güvenlik cezası ile süre cezası arasındaki denge bu davranışı kendiliğinden ortaya çıkardı.
 
-## 28. Araştırmacı uçuş sırasında engel ekledi, bir dronu elle oynattı; 10 dron yine güvenli kaldı
+## 36. Araştırmacı uçuş sırasında engel ekledi, bir dronu elle oynattı; 10 dron yine güvenli kaldı
 
 *≈ 45 sn*
 
 Üçüncü deney benim favorim, çünkü araştırmacılar dronlara resmen eziyet ediyor. Fotoğraftaki kişi uçuşun ortasında, dronların arasına kocaman bir kutu taşıyor. On dron, 3 metre yarıçaplı bir çember üzerinde rastgele verilen hedeflere uçuyor; yönler sürekli değiştiği için birbirlerinden kaçmaları gerekiyor. Uçuş sırasında yeni binaları temsil eden kutular ve silindirler ekleniyor, biri alanda yürüyor, biri bir dronu eliyle tutup yerinden oynatıyor. En sonda da konumu desteklemek için kurulmuş sabit istasyonlar kapatılıyor. Peki sonuç ne oldu? Bir sonraki slayt.
 
-## 29. Ölçümler: dronlar arası mesafe hiç çarpışma sınırına inmedi, yaklaşık 200 hedefe ulaşıldı
+## 37. Ölçümler: dronlar arası mesafe hiç çarpışma sınırına inmedi, yaklaşık 200 hedefe ulaşıldı
 
 *≈ 45 sn*
 
 Sonuç bu üç grafikte. Soldaki grafik, her an dronlar arasındaki en küçük mesafe. Alttaki kırmızı şerit çarpışma mesafesi; çizgi bir kez bile oraya inmiyor. Ortada üç dakika boyunca çizilen yörüngelerin yumağı var. Sağdaki grafik ise ulaşılan hedef sayısı; grafikten okunduğu kadarıyla yaklaşık 200. Mavi şeritler yeni engel eklenen anlar, kırmızı alan sabit istasyonların kapatıldığı süre. Çizgi bu anlarda bile kırılmıyor, düz bir doğru gibi devam ediyor. Yani bozucu olaylar sürünün temposunu düşürmüyor.
 
-## 30. Ağır görüntü işleme yükü altında 4 dron, yürüyen bir insanı dört açıdan takip etti
+## 38. Ağır görüntü işleme yükü altında 4 dron, yürüyen bir insanı dört açıdan takip etti
 
 *≈ 45 sn*
 
 Dördüncü deney platformun ne kadar yük kaldırabildiğini test ediyor. Dört dron, ormanda yürüyen bir insanı önden, arkadan, soldan ve sağdan filme alıyor. Her dronda ek bir renkli kamera var ve aynı anda üç ağır iş çalışıyor: videoyu sıkıştırmak, kaydetmek ve YOLOv5 adlı bir yapay sinir ağıyla insanı tespit etmek. Planlayıcıya bir takip cezası ekleniyor: dron kişinin hızına uysun ve ona göre belirli bir açıda dursun. Köşelerdeki dört küçük resim, dört dronun kamerasından gelen görüntü.
 
-## 31. Bir dronun kamerası tamamen kapansa da sürü hedefi kaybetmedi
+## 39. Bir dronun kamerası tamamen kapansa da sürü hedefi kaybetmedi
 
 *≈ 35 sn*
 
 Burada araştırmacılar küçük bir oyun oynuyor: dronlardan birinin kamerasının önüne beyaz bir örtü tutuyorlar. Ortadaki karede o dronun gördüğü tek şey beyaz bir perde. Ama takip kopmuyor, çünkü dronlar gördüklerini birbirleriyle paylaşıyor. Bir dron kör kaldığında, diğer üç dronun gözlemi hedefin nerede olduğunu söylüyor. Sağdaki karede örtü kalkınca kişi yeniden yeşil kutunun içinde. Sürü olmanın avantajı tam olarak bu.
 
-## 32. Simülasyonda planlayıcı, MADER ve EGO-Swarm'dan daha düzgün yörüngeyi daha hızlı üretti
+## 40. Simülasyonda planlayıcı, MADER ve EGO-Swarm'dan daha düzgün yörüngeyi daha hızlı üretti
 
 *≈ 40 sn*
 
-Son olarak rakiplerle bir yarış. Gerçek dünyada aynı koşulu tekrarlamak zor olduğu için bu karşılaştırma simülasyonda yapılıyor. Rakipler MIT'den MADER ve yazarların önceki çalışması EGO-Swarm. Hız saniyede 1 metreden 3 metreye çıkarılıyor, engeller 2 metre aralıktan 1 metreye sıklaştırılıyor; her ayar rastgele haritalarla 10 kez tekrarlanıyor. Tabloyu özetlersem: bu çalışma daha kısa sürede hesaplıyor, daha az sarsıntılı uçuyor, uçuş süresi rakiplerle benzer ve güvenlik payı her zaman pozitif. Bir sonraki slaytta bunu grafiklerde göreceğiz.
+Son olarak rakiplerle bir yarış. Gerçek dünyada aynı koşulu tekrarlamak zor olduğu için bu karşılaştırma simülasyonda yapılıyor. Rakipler MIT'den MADER ve yazarların önceki çalışması EGO-Swarm. Üçü de dağıtık ve asenkron planlayıcı, yani aynı sınıftaki yöntemler yarışıyor. Hız saniyede 1 metreden 3 metreye çıkarılıyor, engeller 2 metre aralıktan 1 metreye sıklaştırılıyor; her ayar rastgele haritalarla 10 kez tekrarlanıyor. Tabloyu özetlersem: bu çalışma daha kısa sürede hesaplıyor, daha az sarsıntılı uçuyor, uçuş süresi rakiplerle benzer ve güvenlik payı her zaman pozitif. Bir sonraki slaytta bunu grafiklerde göreceğiz.
 
-## 33. Grafiklerde fark açık: bu çalışma MADER'den ~100 kat hızlı, MADER zor koşulda çarpışıyor
+## 41. Grafiklerde fark açık: bu çalışma MADER'den ~100 kat hızlı, MADER zor koşulda çarpışıyor
 
 *≈ 55 sn*
 
 Grafiklerde iki şeye bakalım. Soldaki iki grafik hesap süresi ve eksen logaritmik; her çizgi on kat demek. Mavi MADER yaklaşık 0,1 saniyede, yani 100 milisaniyede hesaplıyor. Sarı, yani bu çalışma, bunun yaklaşık yüzde biri kadar sürede, milisaniyenin altında. Sağdaki iki grafik en küçük güvenlik payı; taralı kırmızı bölge çarpışma demek. Engeller 1 metreye sıklaşınca ve hız 3 metreye çıkınca mavi çubuk bu kırmızı bölgeye iniyor: MADER çarpışıyor. Sarı çubuk ise her ayarda sıfırın üstünde. Bu değerleri grafikten okudum; kesin sayılar makalenin ek tablolarında.
 
-## 34. Swarm playground: 40 dronluk simülasyonu Xbox kumandasıyla siz yönetiyorsunuz
+## 42. Swarm playground: 40 dronluk simülasyonu Xbox kumandasıyla siz yönetiyorsunuz
 
 *≈ 40 sn · zaman kısaysa atlanabilir*
 
 Makalenin belki de en eğlenceli kısmı bu: swarm playground, yani sürü oyun alanı. Bütün kod açık ve bilgisayarınıza kurup 40 dronluk bir sürüyü izleyebiliyorsunuz. Hedefleri, makalenin kendi deyişiyle, eski strateji oyunu Red Alert 2'deki gibi seçip gönderiyorsunuz. Daha da güzeli: sağ alttaki Xbox kumandalarıyla takip edilen hedef ya da dronların kaçması gereken hareketli engel siz oluyorsunuz. Ubuntu ve ROS kurulu bir bilgisayar yetiyor. Bu konuyla ilgilenen varsa denemek için harika bir başlangıç noktası.
 
-## 35. Tartışma: ne başarıldı, ne eksik kaldı?
+## 43. Tartışma: ne başarıldı, ne eksik kaldı?
 
 *≈ 10 sn*
 
 Bu kadar güzel sonuçtan sonra biraz eleştirel bakalım: ne başarıldı, ne eksik kaldı?
 
-## 36. TEEM sahada birlikte sağlanıyor; ancak çözüm yerel ve gerçek testler 10 dronla sınırlı
+## 44. TEEM sahada birlikte sağlanıyor; ancak çözüm yerel ve gerçek testler 10 dronla sınırlı
 
 *≈ 55 sn*
 
-Katkı tarafında üç şey öne çıkıyor. Birincisi, hedef uçuş sırasında istendiği an değiştirilebiliyor; bu da sistemi üst seviye karar veren yazılımlara bağlamayı kolaylaştırıyor. İkincisi, güvenlik ve fiziksel uygunluk planlayıcının içinde çözülüyor; üstteki yazılım sadece göreve odaklanabiliyor. Üçüncüsü, kod, donanım tasarımı ve veri herkese açık. Sınırlılıklarda yazarlar dürüst davranıyor. Gerçek dünya performansı için matematiksel ispattan bilerek vazgeçiyorlar; bulunan çözüm en iyisi değil, yerel olarak iyi. Dronların birbirini beklerken kilitlenmesi nadir görülüyor ama dar ve uzun bir tüp gibi özel geometrilerde olabiliyor. Son madde benim yorumum: gerçek uçuşlar en fazla 10 dronla yapıldı; 40 dron yalnızca simülasyonda.
+Katkı tarafında dört şey öne çıkıyor. Birincisi, sürü tamamen merkezsiz ve asenkron çalışıyor; düştüğünde herkesi durduracak tek bir bilgisayar yok. İkincisi, hedef uçuş sırasında istendiği an değiştirilebiliyor; bu da sistemi üst seviye karar veren yazılımlara bağlamayı kolaylaştırıyor. Üçüncüsü, güvenlik ve fiziksel uygunluk planlayıcının içinde çözülüyor; üstteki yazılım sadece göreve odaklanabiliyor. Dördüncüsü, kod, donanım tasarımı ve veri herkese açık. Sınırlılıklarda yazarlar dürüst davranıyor. Gerçek dünya performansı için matematiksel ispattan bilerek vazgeçiyorlar; bulunan çözüm en iyisi değil, yerel olarak iyi. Dronların birbirini beklerken kilitlenmesi nadir görülüyor ama dar ve uzun bir tüp gibi özel geometrilerde olabiliyor. Son madde benim yorumum: gerçek uçuşlar en fazla 10 dronla yapıldı; 40 dron yalnızca simülasyonda.
 
-## 37. Sonraki adımlar: önceden şekli olmayan, kuş sürüsü gibi esnek formasyonlar
+## 45. Sonraki adımlar: önceden şekli olmayan, kuş sürüsü gibi esnek formasyonlar
 
 *≈ 45 sn · zaman kısaysa atlanabilir*
 
 Makale ileriye dönük birkaç fikir veriyor. Birincisi serbest formasyon: önceden bir şekil tanımlamak yerine dronlar sadece birbirine yakın duruyor ve kuş sürüleri gibi davranıyor. İkincisi, formasyon şeklinin görevin gerektirdiği an değişebilmesi. Üçüncüsü, bir üst katmandaki görev atama yazılımının her drona sadece hedef göndermesi; gerisini planlayıcı halleder. Ben de size bir tartışma sorusu bırakmak istiyorum: bu sürüyü 10 değil 100 dronla gerçek bir ormana salsak, sizce ilk ne bozulur? Kablosuz iletişim mi, konum kestirimi mi, yoksa planlama mı? (Kısa bir süre fikir alın.)
 
-## 38. Sonuçlar
+## 46. Sonuçlar
 
 *≈ 45 sn*
 
-Üç cümleyle özetleyeyim. Bir: sık bir ortamda sürü uçuşu için yörüngenin sadece şeklini değil zamanlamasını da optimize etmek gerekiyor; MINCO bunu milisaniyeler içinde mümkün kılıyor. İki: bütün gereksinimlerin ceza terimine çevrilmesi sistemi genişletilebilir yapıyor; formasyon ve takip birer terimle eklendi. Üç: bütün bunlar 300 gramın altındaki dronlara sığıyor ve sürü GPS, harita ya da merkezi bir sunucu olmadan sık bir ormanda uçabiliyor. Bilim kurgu filmleriyle başlamıştık; görünüşe göre o gelecek sandığımızdan yakın. Dinlediğiniz için teşekkürler; soru ve geri bildirimlerinizi bekliyorum. (Bu slayt soru-cevap boyunca ekranda kalsın.)
+Üç cümleyle özetleyeyim. Bir: sık bir ortamda sürü uçuşu için yörüngenin sadece şeklini değil zamanlamasını da optimize etmek gerekiyor; MINCO bunu milisaniyeler içinde mümkün kılıyor. İki: bütün gereksinimlerin ceza terimine çevrilmesi sistemi genişletilebilir yapıyor; formasyon ve takip birer terimle eklendi. Üç: sürünün bir merkezi yok. Her dron kendi planını yapıyor ve komşularıyla yalnızca birkaç sayılık yörüngeler paylaşıyor. Bütün bunlar 300 gramın altındaki dronlara sığıyor ve sürü GPS, harita ya da merkezi bir sunucu olmadan sık bir ormanda uçabiliyor. Bilim kurgu filmleriyle başlamıştık; görünüşe göre o gelecek sandığımızdan yakın. Dinlediğiniz için teşekkürler; soru ve geri bildirimlerinizi bekliyorum. (Bu slayt soru-cevap boyunca ekranda kalsın.)
 
-## 39. Kaynakça
+## 47. Kaynakça
 
 *≈ 5 sn*
 
 Sunumda atıf yaptığım bütün kaynaklar burada. Görsellerin tamamı ana makaleden alındı.
 
-## 40. Ek A: Kısıt dönüştürme ve kademeli güvenlik
+## 48. Ek A: Kısıt dönüştürme ve kademeli güvenlik
 
 *≈ 60 sn*
 
 (Soru gelirse.) Kısıtları cezaya çevirince çözüm bir kısıtı ihlal edebilir; güvenlik nasıl sağlanıyor? Cevap iki katmanlı. Önce dönüşüm: sürekli zamanda sonsuz sayıda eşitsizlik var, bunlar büyük ağırlıklı ceza integrallerine çevriliyor, integraller de eşit aralıklı örneklerin toplamıyla hesaplanıyor. Sonuç kısıtsız bir problem ve L-BFGS onu hızla çözüyor. Sonra güvenlik merdiveni: her planlamadan sonra kontrol yapılıyor; ihlal varsa o cezanın ağırlığı artırılıp yeniden deneniyor. Birkaç denemede olmazsa 10 milisaniye beklenip yeniden planlanıyor. Harita değiştiği için arka planda sürekli bir çarpışma kontrolü çalışıyor; tehlike görülürse hemen yeniden planlanıyor, o da olmazsa acil durma yörüngesi üretiliyor.
 
-## 41. Ek B: UWB ile konum kayması düzeltme
+## 49. Ek B: UWB ile konum kayması düzeltme
 
 *≈ 50 sn*
 
 (Soru gelirse.) GPS yokken dronların konumu zamanla kaymaz mı, bu da çarpışmaya yol açmaz mı? Evet, kamera ve IMU ile bulunan konum zamanla kayıyor. Bunu düzeltmek için her dron UWB ile komşularına olan mesafeyi ölçüyor. Komşuların konumunu zaten yayınlanan yörüngelerden biliyor. Ölçülen mesafe ile hesaplanan mesafe arasındaki farkı en küçük kareler yöntemiyle en aza indiriyor. Çıkan konumu doğrudan kullanmak yerine yavaş değişen kaymayı kestiriyor, onu filtreden geçirip konuma ekliyor. İletişime neredeyse hiç ek yük binmiyor, çünkü UWB yörünge yayınından ayrı bir frekansta çalışıyor.
-

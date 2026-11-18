@@ -1,6 +1,6 @@
 # Ormanda kendi başına uçan avuç içi dron sürüsü
 
-Zhou vd. (2022) makalesinin Türkçe sunumu: 41 slayt, konuşmacı notları ve sayfa sayfa konuşma metni.
+Zhou vd. (2022) makalesinin Türkçe sunumu: 49 slayt, konuşmacı notları ve sayfa sayfa konuşma metni.
 
 > Zhou, X., Wen, X., Wang, Z., Gao, Y., Li, H., Wang, Q., Yang, T., Lu, H., Cao, Y., Xu, C. ve Gao, F. (2022). Swarm of micro flying robots in the wild. *Science Robotics, 7*, eabm5954. [doi.org/10.1126/scirobotics.abm5954](https://doi.org/10.1126/scirobotics.abm5954)
 
@@ -17,14 +17,15 @@ Sunan: Samed Bilgin
 
 ## Sunumun yapısı
 
-Yaklaşık 27 dakika. Zaman kısalırsa "atlanabilir" işaretli slaytlar geçilerek 22 dakikaya iner.
+Yaklaşık 33 dakika. Zaman kısalırsa "atlanabilir" işaretli slaytlar geçilerek 27 dakikaya iner.
 
 1. **Problem:** bilim kurgudaki sürüler, TEEM gereksinimlerinin çelişkisi, önceki çalışmalar, araştırma sorusu
 2. **İlham:** böcek gibi refleks mi, kuş gibi planlama mı
 3. **Yöntem:** donanım, mimari, şekil ve zamanın birlikte optimizasyonu (MINCO), ceza terimleri
-4. **Deneyler:** bambu ormanı, formasyon, bozucu olaylar, insan takibi, MADER ve EGO-Swarm ile karşılaştırma
-5. **Tartışma:** katkı, sınırlılıklar, sonraki adımlar
-6. **Ek:** kısıt dönüştürme ve UWB ile konum düzeltme (soru gelirse)
+4. **Dağıtık yapı:** merkezi ve dağıtık sürü, ağda ne paylaşıldığı (yörünge yayını), komşunun bir ceza terimi olması, asenkron planlama, paylaşılan bilginin dört işi, ağ yapısı ve bedeli
+5. **Deneyler:** bambu ormanı, formasyon, bozucu olaylar, insan takibi, MADER ve EGO-Swarm ile karşılaştırma
+6. **Tartışma:** katkı, sınırlılıklar, sonraki adımlar
+7. **Ek:** kısıt dönüştürme ve UWB ile konum düzeltme (soru gelirse)
 
 ## Sunumu yeniden üretmek
 
@@ -36,7 +37,7 @@ npm install
 PPTX_SKILL=/skill/klasorunun/yolu NODE_PATH="$PWD/node_modules" node build.js
 ```
 
-Çıktı repo kökündeki `Zhou2022_Suru_Sunumu.pptx` dosyasının üzerine yazılır.
+Çıktı repo kökündeki `Zhou2022_Suru_Sunumu.pptx` ve `Konusma_Metni.md` dosyalarının üzerine yazılır. Konuşma metni slayt notlarıyla aynı kaynaktan üretildiği için ikisi her zaman aynıdır.
 
 ## Nasıl hazırlandı
 

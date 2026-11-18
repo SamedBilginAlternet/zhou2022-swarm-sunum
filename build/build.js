@@ -92,7 +92,7 @@ function text(s, content, opts) {
   s.addText(content, Object.assign({ isTextBox: true, margin: 0, color: C.text1, valign: "top" }, opts));
 }
 function crumb(s, active) {
-  const secs = ["Problem", "İlham", "Yöntem", "Deneyler", "Tartışma"];
+  const secs = ["Problem", "İlham", "Yöntem", "Dağıtık yapı", "Deneyler", "Tartışma"];
   const runs = [];
   secs.forEach((x, i) => {
     runs.push({ text: x, options: { bold: x === active, color: x === active ? C.accent1 : C.accent3 } });
@@ -460,7 +460,7 @@ section("Yöntem");
   seg(s, 6.85, 2.7, 7.45, 3.4, { color: C.accent2, dash: "dash", arrow: true, beginArrow: true });
   text(s, "Yörüngeler (MINCO parametreleri) kablosuz ağda yayınlanır", { x: 7.15, y: 3.95, w: 2.35, h: 0.95, fontSize: SIZE.small, color: C.accent2 });
   cite(s, "Zhou vd. (2022), Fig. 2B ve 'System architecture' bölümü");
-  note(s, 50, "Sistemin mimarisi bu. Kutunun içi tek bir dron ve her dron aynı yapıda. Kamera ortamı görüyor, haritalama modülü bir doluluk haritası çıkarıyor, planlayıcı yörüngeyi hesaplıyor, kontrol kartı da o yörüngeyi izliyor. Konum kamera ve IMU ile bulunuyor; zamanla biriken hata UWB ile düzeltiliyor. Dikkat edin, ortada merkez bir bilgisayar yok. Dronlar arasındaki tek bağlantı sağdaki turuncu kesik çizgiler: her dron kendi planladığı yörüngeyi kablosuz ağda yayınlıyor. Böylece herkes komşusunun birkaç saniye sonra nerede olacağını biliyor. Merkez olmadığı için sistem tek bir bilgisayara da bağımlı değil.");
+  note(s, 50, "Sistemin mimarisi bu. Kutunun içi tek bir dron ve her dron aynı yapıda. Kamera ortamı görüyor, haritalama modülü bir doluluk haritası çıkarıyor, planlayıcı yörüngeyi hesaplıyor, kontrol kartı da o yörüngeyi izliyor. Konum kamera ve IMU ile bulunuyor; zamanla biriken hata UWB ile düzeltiliyor. Dikkat edin, ortada merkez bir bilgisayar yok. Dronlar arasındaki tek bağlantı sağdaki turuncu kesik çizgiler: her dron kendi planladığı yörüngeyi kablosuz ağda yayınlıyor. Böylece herkes komşusunun birkaç saniye sonra nerede olacağını biliyor. Merkez olmadığı için sistem tek bir bilgisayara da bağımlı değil. Bu yayın işine birazdan ayrı bir bölümde döneceğiz, çünkü sürüyü sürü yapan şey o.");
 }
 
 // 16. Bilmece
@@ -600,11 +600,228 @@ section("Yöntem");
 }
 
 // =====================================================================
+// Dağıtık yapı: makalenin "From single to swarm", "System architecture",
+// "Formation expectation", "Localization and drift correction" ve
+// "Wireless communication modules" bölümlerinden
+function dot(s, cx, cy, d, color, name) {
+  s.addShape(pres.shapes.OVAL, { x: cx - d / 2, y: cy - d / 2, w: d, h: d, fill: { color }, line: { type: "none" }, objectName: name });
+}
+function card(s, x, y, w, h, head, body, o = {}) {
+  rect(s, x, y, w, h, { fill: o.fill || C.background2, name: "Kart " + head });
+  text(s, [{ text: head, options: { bold: true, fontSize: o.headSize || SIZE.label, color: o.headColor || C.text2, breakLine: true } }, { text: body, options: { fontSize: o.bodySize || 13 } }],
+    { x: x + 0.15, y: y + 0.1, w: w - 0.3, h: h - 0.2, paraSpaceAfter: 4, valign: o.valign || "top" });
+}
+section("Dağıtık yapı");
+// D0. Ayraç
+{
+  const s = newSlide("BOLUM");
+  s.addText("Bölüm 3", { placeholder: "bolumno", bullet: false });
+  curTitle = "Dağıtık yapı: merkez yok, her dron kendi kararını veriyor";
+  s.addText(curTitle, { placeholder: "title" });
+  s.addText("Ne paylaşıyorlar, komşuyu nasıl hesaba katıyorlar, kim kimi bekliyor?", { placeholder: "teaser", bullet: false });
+  note(s, 15, "Şimdiye kadar tek bir dronun beynine baktık. Ama bu bir sürü: on dron aynı ormanda, aynı anda uçuyor. Kim kime ne söylüyor, kim kimi bekliyor? Bu bölüm bence makalenin en az konuşulan ama en önemli kısmı, çünkü sürüyü sürü yapan şey bu.");
+}
+
+// D1. Merkezi vs dağıtık
+{
+  const s = newSlide("ICERIK"); crumb(s, "Dağıtık yapı");
+  title(s, "Merkezi sürüde tek bir beyin herkesi yönetir; burada her dron kendi planını yapıp komşularını dinler");
+  const panel = (ox, label, labelColor, central, items) => {
+    rect(s, ox, 1.45, 4.35, 3.55, central ? { line: C.accent4, lineW: 1, name: "Panel " + label } : { line: C.accent2, lineW: 1.5, name: "Panel " + label });
+    text(s, label, { x: ox + 0.2, y: 1.55, w: 4.0, h: 0.32, fontSize: SIZE.label, bold: true, color: labelColor });
+    const cx = ox + 2.175, cy = 2.65;
+    const P = [0, 1, 2, 3, 4].map((k) => { const a = -Math.PI / 2 + (k * 2 * Math.PI) / 5; return [cx + 1.45 * Math.cos(a), cy + 0.58 * Math.sin(a)]; });
+    if (central) {
+      P.forEach((p) => seg(s, cx, cy, p[0], p[1], { color: C.accent3, width: 1.25 }));
+      rect(s, cx - 0.5, cy - 0.22, 1.0, 0.44, { fill: C.accent3, name: "Merkez sunucu" });
+      text(s, "Sunucu", { x: cx - 0.5, y: cy - 0.22, w: 1.0, h: 0.44, fontSize: 13, bold: true, color: C.background1, align: "center", valign: "middle" });
+      P.forEach((p, k) => dot(s, p[0], p[1], 0.26, C.accent4, "Dron " + (k + 1)));
+    } else {
+      for (let a = 0; a < 5; a++) for (let b = a + 1; b < 5; b++) seg(s, P[a][0], P[a][1], P[b][0], P[b][1], { color: C.accent2, width: 1, dash: "dash" });
+      P.forEach((p, k) => dot(s, p[0], p[1], 0.3, C.text2, "Dron " + (k + 1)));
+    }
+    text(s, bullets(items), { x: ox + 0.2, y: 3.45, w: 3.95, h: 1.45, fontSize: SIZE.small, paraSpaceAfter: 6 });
+  };
+  panel(M, "Merkezi (ör. SCP, RBP)", C.accent3, true, ["Küresel harita ve uzun çevrimdışı hesap gerekir", "Sunucu giderse sürü kör kalır", "Bütün hesap yükü tek bilgisayarda"]);
+  panel(5.15, "Dağıtık (bu çalışma)", C.accent2, false, ["Her dronun kendi kamerası, haritası, planlayıcısı var", "Tek bağ: yörüngelerin yayınlanması", "Zayıf merkezli yapı daha dayanıklı"]);
+  cite(s, "Zhou vd. (2022), Giriş ve 'System architecture'; merkezi planlayıcılar (SCP, RBP) Ek Malzeme'de");
+  note(s, 55, "Önce iki yaklaşımı yan yana koyalım. Solda merkezi bir sürü: ortada güçlü bir bilgisayar var, bütün haritayı biliyor, herkesin yolunu o hesaplıyor ve dronlara gönderiyor. Bir orkestra gibi düşünün; şef herkesin ne zaman çalacağını söylüyor. Sorun şu: ormanda önceden bir harita yok, hesap uzun sürüyor ve şef düşerse müzik duruyor. Makale bu tür iki planlayıcıyı, SCP ve RBP'yi, ek malzemede deniyor; ikisi de küresel harita ve çevrimdışı hesap istiyor. Sağda bu çalışma: şef yok. Her dron kendi gözüyle görüyor, kendi haritasını çıkarıyor, kendi yolunu planlıyor. Dronlar arasındaki tek bağ turuncu kesik çizgiler, yani yörüngelerini birbirine yayınlamaları. Bu daha çok kalabalık bir kaldırıma benziyor: kimse kimseye emir vermiyor, herkes yanındakilerin nereye gittiğine bakıp kendi yolunu seçiyor. Yazarlar, atıf yaptıkları robotik literatürüne dayanarak bu tür zayıf merkezli yapıların daha dayanıklı olduğunu, iletişim ya da GPS kesildiğinde bile iş görmeye devam edebildiğini söylüyor.");
+}
+
+// D2. İkinci bilmece
+{
+  const s = newSlide("ICERIK"); crumb(s, "Dağıtık yapı");
+  title(s, "İkinci bilmece: dronlar kablosuz ağda birbirine ne gönderiyor?");
+  const opts = [["A", "Gördüğü kamera görüntüsünü"], ["B", "Çıkardığı haritayı"], ["C", "Birkaç sayı: kendi yörüngesini"]];
+  opts.forEach((o, i) => {
+    const x = M + i * 3.07;
+    rect(s, x, 1.7, 2.86, 2.6, { fill: C.background2, name: "Seçenek " + o[0] });
+    text(s, o[0], { x, y: 1.85, w: 2.86, h: 0.9, fontSize: 48, bold: true, color: C.accent1, align: "center" });
+    text(s, o[1], { x: x + 0.2, y: 2.9, w: 2.46, h: 1.2, fontSize: SIZE.sub, align: "center", color: C.text1 });
+  });
+  text(s, "Salona soru: elinizi kaldırın! İpucu: on dron aynı dar bağlantıyı paylaşıyor", { x: M, y: 4.55, w: 9.0, h: 0.4, fontSize: SIZE.label, italic: true, color: C.accent3 });
+  cite(s, "Zhou vd. (2022), 'From single to swarm' bölümünden uyarlanmıştır");
+  note(s, 30, "Bir bilmece daha. (Salona dönün.) Bu dronlar birbirine kablosuz ağ üzerinden ne gönderiyor sizce? A: gördükleri kamera görüntüsünü. B: çıkardıkları haritayı. C: sadece birkaç sayı, yani kendi yörüngelerini. Elinizi kaldırın. (Birkaç saniye bekleyin.) Ekrandaki ipucuna bakın: avuç içi bir dronun kablosuz bağlantısı sınırlı ve on dron aynı anda konuşuyor.", { atla: true });
+}
+
+// D3. Cevap: yörünge yayını
+{
+  const s = newSlide("ICERIK"); crumb(s, "Dağıtık yapı");
+  title(s, "Doğru cevap C: ağda yalnızca yörüngenin birkaç sayısı dolaşıyor; komşunun yakın geleceği bundan çıkıyor");
+  rect(s, M, 1.5, 2.6, 1.8, { fill: C.background2, name: "Mesaj paketi" });
+  text(s, [
+    { text: "Dron j'nin mesajı", options: { bold: true, color: C.accent2, breakLine: true } },
+    { text: "q", options: { bold: true } }, { text: "  ara noktalar", options: { breakLine: true } },
+    { text: "T", options: { bold: true } }, { text: "  parça süreleri", options: { breakLine: true } },
+    { text: "t₀", options: { bold: true } }, { text: "  başlangıç anı (ortak saat)" },
+  ], { x: M + 0.15, y: 1.6, w: 2.35, h: 1.6, fontSize: SIZE.small, paraSpaceAfter: 5 });
+  seg(s, 3.1, 2.4, 3.5, 2.4, { color: C.accent2, dash: "dash", arrow: true, width: 1.75 });
+  rect(s, 3.5, 1.5, 2.2, 1.8, { fill: C.text2, name: "Alıcı dron" });
+  text(s, [{ text: "Dron i", options: { bold: true, fontSize: SIZE.label, breakLine: true } }, { text: "MINCO ile yörüngeyi doğrusal sürede geri kurar", options: { fontSize: 13 } }],
+    { x: 3.62, y: 1.5, w: 1.96, h: 1.8, color: C.background1, align: "center", valign: "middle", paraSpaceAfter: 6 });
+  seg(s, 5.7, 2.4, 6.0, 2.4, { color: C.text2, arrow: true });
+  rect(s, 6.0, 1.5, 3.5, 1.8, { line: C.accent4, lineW: 1, rounded: false, name: "Komşunun geleceği" });
+  text(s, "Dron j'nin birkaç saniyelik geleceği", { x: 6.1, y: 1.55, w: 3.3, h: 0.28, fontSize: 12, bold: true, color: C.accent3 });
+  const pts = [[6.35, 2.95], [7.2, 2.6], [8.1, 2.3], [9.05, 2.05]];
+  poly(s, pts.concat([[9.3, 1.98]]), { color: C.accent1, width: 1.75, dash: "dash", arrow: true });
+  ["şimdi", "+1 s", "+2 s", "+3 s"].forEach((l, i) => {
+    dot(s, pts[i][0], pts[i][1], 0.17, i === 0 ? C.accent2 : C.accent1, "Konum " + l);
+    text(s, l, { x: pts[i][0] - 0.3, y: pts[i][1] + 0.12, w: 0.6, h: 0.22, fontSize: 11, align: "center", color: C.accent3 });
+  });
+  const cards = [
+    ["Az veri", "Görüntü ya da harita değil, bir avuç sayı; sınırlı bant genişliğine sığıyor"],
+    ["Ortak saat", "Zaman damgası, komşunun 'şimdi' nerede olduğunu hesaplamaya yarıyor"],
+    ["Birkaç saniye yeter", "Her dron eski planı bitmeden yenisini yayınlıyor; arada boşluk kalmıyor"],
+  ];
+  cards.forEach((c, i) => card(s, M + i * 3.07, 3.6, 2.86, 1.35, c[0], c[1]));
+  cite(s, "Zhou vd. (2022), 'From single to swarm' bölümü ve Denk. 17–19");
+  note(s, 55, "Doğru cevap C. Ağda dolaşan şey görüntü ya da harita değil, yörüngenin birkaç sayısı. Hatırlarsanız MINCO'da bir yörüngeyi tanımlamak için iki şey yetiyordu: ara noktalar ve her parçanın süresi. Dron j bunları ve yörüngeye başladığı anı yayınlıyor. Dron i bu sayıları alıyor ve MINCO ile yörüngeyi kendi tarafında çok hızlı biçimde yeniden kuruyor. Böylece j'nin şimdi, bir saniye sonra, üç saniye sonra nerede olacağını biliyor. Zamanlar ortak bir saate göre hizalanıyor; yoksa 'şimdi' her dron için farklı bir an olurdu. Birkaç saniyelik bilgi de yetiyor, çünkü her dron eski planı bitmeden yenisini yayınlıyor. Arkadaşınıza bütün gün çektiğiniz videoyu göndermek yerine 'saat üçte kafedeyim' diye yazmak gibi: çok az veri, ama tam ihtiyaç duyulan bilgi.");
+}
+
+// D4. Komşu = ceza terimi
+{
+  const s = newSlide("ICERIK"); crumb(s, "Dağıtık yapı");
+  title(s, "Komşunun yörüngesi planlayıcıya bir ceza terimi olarak giriyor; güvenlik payı dikeyde daha geniş");
+  const sub = (t) => ({ text: t, options: { subscript: true } });
+  text(s, [{ text: "J", options: { bold: true } }, sub("w"), { text: " = Σ" }, sub("k≠u"), { text: " Σ" }, sub("i"), { text: " max{ C" }, sub("w"), { text: "² − d" }, sub("uk"), { text: "(tᵢ)², 0 }³" }],
+    { x: M, y: 1.5, w: 4.4, h: 0.5, fontSize: SIZE.sub, color: C.text2, objectName: "Sürü cezası" });
+  text(s, bullets([
+    "Her örnek anında her komşuya olan mesafe d ölçülür",
+    "Mesafe güvenlik payının altına inerse ceza hızla büyür",
+    "Komşunun planı sabit kabul edilir; herkes böyle yaptığı için kaçınma karşılıklı olur",
+    "Yürüyen insan, bisiklet gibi hareketli engeller de aynı yolla: tahmin edilen yörünge, sanal bir komşu olur",
+  ]), { x: M, y: 2.15, w: 4.4, h: 2.85, fontSize: SIZE.small, paraSpaceAfter: 8 });
+  // Yan görünüş: dron u, dikeyde uzun güvenlik bölgesi, pervane rüzgârı, dron k
+  const ux = 6.7, uy = 3.15;
+  s.addShape(pres.shapes.OVAL, { x: ux - 0.7, y: uy - 1.3, w: 1.4, h: 2.6, fill: { color: C.accent5 }, line: { color: C.accent2, width: 1.5, dashType: "dash" }, objectName: "Güvenlik bölgesi" });
+  seg(s, ux, uy - 0.08, ux, uy - 1.28, { color: C.accent2, arrow: true });
+  text(s, "dikeyde daha geniş", { x: 5.0, y: uy - 1.15, w: 0.85, h: 0.5, fontSize: 11, color: C.accent2, align: "right" });
+  seg(s, 5.88, uy - 0.9, ux - 0.05, uy - 0.9, { color: C.accent2, width: 0.75, dash: "sysDot" });
+  seg(s, ux + 0.25, uy, ux + 0.68, uy, { color: C.accent2, arrow: true });
+  text(s, [{ text: "C" }, { text: "w", options: { subscript: true } }], { x: ux + 0.3, y: uy + 0.02, w: 0.4, h: 0.22, fontSize: 12, color: C.accent2 });
+  [-0.15, 0, 0.15].forEach((dx) => seg(s, ux + dx, uy + 0.12, ux + dx, uy + 0.55, { color: C.accent3, arrow: true, width: 1.25 }));
+  text(s, "pervane rüzgârı", { x: 5.0, y: uy + 0.15, w: 0.95, h: 0.45, fontSize: 11, color: C.accent3, align: "right" });
+  rect(s, ux - 0.25, uy - 0.07, 0.5, 0.14, { fill: C.text2, name: "Dron u" });
+  text(s, "Dron u", { x: ux - 0.6, y: uy + 1.33, w: 1.2, h: 0.25, fontSize: 12, bold: true, color: C.text2, align: "center" });
+  const kx = 8.85, ky = 2.0;
+  poly(s, [[kx, ky + 0.1], [8.05, 2.75], [7.7, 3.55], [7.95, 4.35]], { color: C.accent1, dash: "dash", arrow: true });
+  rect(s, kx - 0.25, ky - 0.07, 0.5, 0.14, { fill: C.accent1, name: "Dron k" });
+  text(s, "Dron k", { x: kx - 0.5, y: ky - 0.38, w: 1.0, h: 0.25, fontSize: 12, bold: true, color: C.accent1, align: "center" });
+  text(s, "k'nin yayınlanan yörüngesi bölgenin dışından dolaşıyor", { x: 8.05, y: 3.6, w: 1.45, h: 0.95, fontSize: 11, color: C.accent1 });
+  cite(s, "Zhou vd. (2022), 'From single to swarm' (Denk. 17–19) ve 'Dynamic obstacle avoidance'; çizim şematiktir");
+  note(s, 55, "Peki dron, komşusunun yörüngesini öğrenince ne yapıyor? Hatırlarsanız her kural bir ceza terimiydi. Komşular da öyle: J_w terimi, her örnek anında her komşuya olan mesafeye bakıyor. Mesafe güvenlik payının altına inerse ceza hızla büyüyor ve planlayıcı yörüngeyi o bölgeden uzaklaştırıyor. Güvenlik bölgesinin şekline dikkat edin: yuvarlak değil, dikeyde uzun bir elips. Çünkü bir dronun tam altında uçmak tehlikeli; pervanelerin aşağı ittiği hava alttaki dronu sarsıyor. Bir de güzel bir ayrıntı var: kimse kimseye 'sen geç' demiyor. Her dron diğerlerinin planını sabit kabul edip kendi planını ona göre ayarlıyor; herkes bunu yaptığı için kaçınma karşılıklı oluyor. Yürüyen bir insan ya da bisiklet gibi hareketli engeller de aynı yolla ele alınıyor: hareketleri tahmin ediliyor ve sanal bir komşu gibi bu terime giriyorlar.");
+}
+
+// D5. Asenkron zaman çizelgesi
+{
+  const s = newSlide("ICERIK"); crumb(s, "Dağıtık yapı");
+  title(s, "Kimse kimseyi beklemiyor: her dron kendi zamanında planlıyor ve gelen yörüngeleri hesaba katıyor");
+  const lanes = [1.75, 2.4, 3.05], x0 = 1.45, x1 = 9.4;
+  const plans = [[1.7, 3.9, 6.3, 8.4], [2.6, 4.9, 6.95], [2.05, 4.35, 7.55, 8.85]];
+  lanes.forEach((y, i) => {
+    text(s, "Dron " + (i + 1), { x: M, y: y - 0.14, w: 0.9, h: 0.28, fontSize: SIZE.small, bold: true, color: C.text2 });
+    seg(s, x0, y, x1, y, { color: C.accent4, width: 1 });
+    plans[i].forEach((px) => {
+      const hot = i === 1 && px === 6.95;
+      rect(s, px, y - 0.14, 0.45, 0.28, { fill: hot ? C.accent2 : C.accent1, name: hot ? "Anında yeniden plan" : "Planla ve yayınla" });
+    });
+  });
+  seg(s, x0, 3.45, x1, 3.45, { color: C.text2, arrow: true });
+  text(s, "zaman", { x: 8.7, y: 3.5, w: 0.7, h: 0.22, fontSize: 11, color: C.accent3, align: "right" });
+  seg(s, 6.55, lanes[0] + 0.14, 6.98, lanes[1] - 0.14, { color: C.accent2, dash: "dash", arrow: true, width: 1.5 });
+  text(s, "yayın geldi → çakışma → hemen yeniden plan", { x: 7.45, y: 1.95, w: 2.05, h: 0.38, fontSize: 11, color: C.accent2 });
+  rect(s, x0, 3.55, 0.2, 0.15, { fill: C.accent1, name: "Lejant mavi" });
+  text(s, "kendi zamanında planla ve yayınla", { x: x0 + 0.28, y: 3.5, w: 2.6, h: 0.25, fontSize: 11, color: C.accent3 });
+  rect(s, 4.4, 3.55, 0.2, 0.15, { fill: C.accent2, name: "Lejant turuncu" });
+  text(s, "tehlike görülünce anında yeniden plan", { x: 4.68, y: 3.5, w: 2.9, h: 0.25, fontSize: 11, color: C.accent3 });
+  const cards = [
+    ["Tur yok, sıra yok", "Herkesin aynı anda planlaması ya da sırasını beklemesi gerekmiyor"],
+    ["Arka planda nöbetçi", "Sürekli çarpışma kontrolü; yeniden plan yetmezse acil duruş"],
+    ["Kilitlenme nadir", "Rastgele zamanlama ve esnek yörünge, dronların birbirini sonsuza dek beklemesini önlüyor"],
+  ];
+  cards.forEach((c, i) => card(s, M + i * 3.07, 3.9, 2.86, 1.15, c[0], c[1], { bodySize: 12 }));
+  cite(s, "Şematik; Zhou vd. (2022), 'Benchmark comparisons', 'Hierarchical safety guarantee' ve Tartışma");
+  note(s, 55, "Sıradaki soru: bu planlama ne zaman oluyor? Herkes aynı anda mı planlıyor, yoksa sırayla mı? İkisi de değil; planlayıcı asenkron. Mavi bloklar her dronun planlama anları. Gördüğünüz gibi herkes kendi zamanında planlıyor ve planını yayınlıyor; kimse bir turun başlamasını ya da sırasının gelmesini beklemiyor. Turuncu oka bakın: Dron 1 yeni bir yörünge yayınladı, Dron 2 bunu aldığında kendi planıyla çakıştığını gördü ve hemen yeniden planladı. Arka planda sürekli çalışan bir güvenlik kontrolü var; yeniden planlama da yetmezse dron acil duruş yörüngesine geçiyor. Bunun güzel bir yan etkisi de var. Çok robotlu sistemlerde iki robotun birbirini sonsuza dek beklediği, kilitlenme denen bir sorun bilinir. Yazarlara göre gerçek dünyanın rastgeleliği ve asenkron planlama bunu büyük ölçüde kendiliğinden önlüyor.");
+}
+
+// D6. Tek kanal, dört iş
+{
+  const s = newSlide("ICERIK"); crumb(s, "Dağıtık yapı");
+  title(s, "Paylaşılan bilgi dört işe yarıyor: çarpışmadan kaçınma, lidersiz formasyon, konum düzeltme, ortak takip");
+  const hx = 4.0, hy = 2.7, hw = 2.0, hh = 1.1, cw = 3.0;
+  const boxes = [
+    [M, 1.5, "Çarpışmadan kaçınma", "Paylaşılan: yörünge. Komşu, ceza toplamına bir terim olarak girer"],
+    [6.5, 1.5, "Lidersiz formasyon", "Paylaşılan: yörünge. Her dron formasyonun yerini diğerlerinden kendisi çıkarır"],
+    [M, 3.75, "Konum düzeltme", "Paylaşılan: yörünge ve UWB mesafesi. Ayrı frekans, ek yük yok (Ek B)"],
+    [6.5, 3.75, "Ortak hedef takibi", "Paylaşılan: hedef gözlemi. Bir kamera kapansa diğerleri görmeye devam eder"],
+  ];
+  boxes.forEach(([x, y]) => {
+    const left = x < 5, top = y < 3;
+    seg(s, left ? x + cw : x, y + 0.65, left ? hx + 0.25 : hx + hw - 0.25, top ? hy : hy + hh, { color: C.accent2, dash: "dash", width: 1.5 });
+  });
+  rect(s, hx, hy, hw, hh, { fill: C.text2, name: "Kablosuz ağ" });
+  text(s, [{ text: "Kablosuz ağ", options: { bold: true, fontSize: SIZE.label, breakLine: true } }, { text: "her dron yayınlar, herkes dinler", options: { fontSize: 12 } }],
+    { x: hx + 0.1, y: hy, w: hw - 0.2, h: hh, color: C.background1, align: "center", valign: "middle", paraSpaceAfter: 4 });
+  boxes.forEach(([x, y, h, b]) => card(s, x, y, cw, 1.3, h, b));
+  cite(s, "Zhou vd. (2022): sürü cezası, formasyon, konum kayması düzeltme ve çok dronlu takip bölümleri");
+  note(s, 50, "Paylaşılan bilginin işi sadece çarpışmayı önlemek değil; aynı kanal dört iş görüyor. Birincisi, az önce gördüğümüz çarpışmadan kaçınma. İkincisi formasyon. Dikkat edin, lider bir dron yok. Her dron diğerlerinin yörüngelerine bakıp formasyonun şu an nerede olması gerektiğini kendisi hesaplıyor ve kendi köşesine gidiyor. Üçüncüsü konum düzeltme: dronlar UWB ile birbirine olan mesafeyi ölçüyor. Komşunun yerini zaten yörüngesinden bildiği için kendi konumundaki kaymayı düzeltebiliyor; ayrıntısı Ek B'de. Dördüncüsü takip deneyinde: dronlar hedef gözlemlerini paylaşıyor, böylece bir dronun kamerası kapansa bile diğerleri hedefi görmeye devam ediyor. Deneylerde bunların hepsini göreceğiz.");
+}
+
+// D7. Ağ yapısı ve bedeli
+{
+  const s = newSlide("ICERIK"); crumb(s, "Dağıtık yapı");
+  title(s, "İki ağ denendi: yönlendiricili yıldız ağ daha hızlı, eşler arası ağ büyük sürüye daha uygun");
+  const net = (ox, label, star, cap) => {
+    rect(s, ox, 1.45, 4.35, 2.15, { line: C.accent4, lineW: 1, rounded: false, name: "Ağ " + label });
+    text(s, label, { x: ox + 0.15, y: 1.52, w: 4.05, h: 0.3, fontSize: SIZE.small, bold: true, color: C.text2 });
+    const cx = ox + 1.25, cy = 2.6;
+    const P = [[cx - 0.85, cy - 0.5], [cx + 0.85, cy - 0.5], [cx - 0.85, cy + 0.5], [cx + 0.85, cy + 0.5]];
+    if (star) {
+      P.forEach((p) => seg(s, cx, cy, p[0], p[1], { color: C.accent1, width: 1.25 }));
+      rect(s, cx - 0.32, cy - 0.17, 0.64, 0.34, { fill: C.accent3, name: "Yönlendirici" });
+      text(s, "Wi-Fi", { x: cx - 0.32, y: cy - 0.17, w: 0.64, h: 0.34, fontSize: 11, bold: true, color: C.background1, align: "center", valign: "middle" });
+    } else {
+      for (let a = 0; a < 4; a++) for (let b = a + 1; b < 4; b++) seg(s, P[a][0], P[a][1], P[b][0], P[b][1], { color: C.accent2, width: 1.25, dash: "dash" });
+    }
+    P.forEach((p, k) => dot(s, p[0], p[1], 0.26, C.text2, "Dron " + (k + 1)));
+    text(s, cap, { x: ox + 2.4, y: 1.95, w: 1.8, h: 1.5, fontSize: 13, valign: "middle" });
+  };
+  net(M, "Yıldız ağ (tek yönlendirici)", true, "Bant genişliği daha yüksek; bütün mesajlar yönlendiriciden geçer");
+  net(5.15, "Eşler arası (ad hoc) ağ", false, "Aracı yok, dronlar doğrudan konuşur; büyük sürüye daha uygun");
+  rect(s, M, 3.8, 9.0, 1.2, { line: C.accent2, lineW: 1.5, name: "Dağıtık olmanın bedeli" });
+  text(s, "Dağıtık olmanın bedeli", { x: M + 0.2, y: 3.88, w: 4, h: 0.3, fontSize: SIZE.label, bold: true, color: C.accent2 });
+  text(s, bullets(["Uçuş başında herkesin koordinat sistemi kabaca uyuşmalı", "Herkes herkesin yörüngesini dinliyor: sürü büyüdükçe ağ ve hesap yükü de büyür*"]),
+    { x: M + 0.2, y: 4.22, w: 8.6, h: 0.75, fontSize: SIZE.small, paraSpaceAfter: 4 });
+  cite(s, "Zhou vd. (2022), 'Wireless communication modules' ve 'Localization and drift correction'; * sunucunun yorumu");
+  note(s, 45, "Bu bilgi hangi ağdan gidiyor? Yazarlar iki yapı deniyor. Solda evlerdeki gibi bir Wi-Fi: ortada bir yönlendirici var, bütün mesajlar onun üzerinden geçiyor. Bant genişliği daha yüksek. Sağda eşler arası, yani ad hoc bir ağ: aracı yok, dronlar doğrudan konuşuyor. Ek malzemedeki ölçümlere göre büyük sürüler için bu daha uygun. Dağıtık olmanın bir bedeli de var. Birincisi, uçuş başında herkesin koordinat sistemi kabaca aynı olmalı; yoksa konum düzeltme doğru bir yerden başlayamıyor. İkincisi, bu benim yorumum: her dron herkesin yörüngesini dinlediği için sürü büyüdükçe ağ ve hesap yükü de büyüyor. Tartışma bölümünde soracağım 100 dron sorusu tam da buraya bağlanıyor.", { atla: true });
+}
+
+// =====================================================================
 section("Deneyler");
 // 22. Ayraç
 {
   const s = newSlide("BOLUM");
-  s.addText("Bölüm 3", { placeholder: "bolumno", bullet: false });
+  s.addText("Bölüm 4", { placeholder: "bolumno", bullet: false });
   curTitle = "Deneyler: dört gerçek uçuş ve bir simülasyon karşılaştırması";
   s.addText(curTitle, { placeholder: "title" });
   s.addText("Bambu ormanı · formasyon · bozucu olaylar · insan takibi · rakiplerle yarış", { placeholder: "teaser", bullet: false });
@@ -758,7 +975,7 @@ section("Deneyler");
   ], { x: 4.1, y: 1.5, w: 5.4, colW: [2.0, 1.4, 2.0], rowH: 0.52, fontSize: 15, color: C.text1, valign: "middle",
     margin: [0.03, 0.1, 0.03, 0.1], border: { type: "solid", pt: 0.75, color: C.accent4 }, objectName: "Benchmark tablosu" });
   cite(s, "Zhou vd. (2022), Fig. 7 ve 'Benchmark comparisons' bölümü");
-  note(s, 40, "Son olarak rakiplerle bir yarış. Gerçek dünyada aynı koşulu tekrarlamak zor olduğu için bu karşılaştırma simülasyonda yapılıyor. Rakipler MIT'den MADER ve yazarların önceki çalışması EGO-Swarm. Hız saniyede 1 metreden 3 metreye çıkarılıyor, engeller 2 metre aralıktan 1 metreye sıklaştırılıyor; her ayar rastgele haritalarla 10 kez tekrarlanıyor. Tabloyu özetlersem: bu çalışma daha kısa sürede hesaplıyor, daha az sarsıntılı uçuyor, uçuş süresi rakiplerle benzer ve güvenlik payı her zaman pozitif. Bir sonraki slaytta bunu grafiklerde göreceğiz.");
+  note(s, 40, "Son olarak rakiplerle bir yarış. Gerçek dünyada aynı koşulu tekrarlamak zor olduğu için bu karşılaştırma simülasyonda yapılıyor. Rakipler MIT'den MADER ve yazarların önceki çalışması EGO-Swarm. Üçü de dağıtık ve asenkron planlayıcı, yani aynı sınıftaki yöntemler yarışıyor. Hız saniyede 1 metreden 3 metreye çıkarılıyor, engeller 2 metre aralıktan 1 metreye sıklaştırılıyor; her ayar rastgele haritalarla 10 kez tekrarlanıyor. Tabloyu özetlersem: bu çalışma daha kısa sürede hesaplıyor, daha az sarsıntılı uçuyor, uçuş süresi rakiplerle benzer ve güvenlik payı her zaman pozitif. Bir sonraki slaytta bunu grafiklerde göreceğiz.");
 }
 
 // 33. Benchmark grafikleri
@@ -797,7 +1014,7 @@ section("Tartışma");
 // 35. Ayraç
 {
   const s = newSlide("BOLUM");
-  s.addText("Bölüm 4", { placeholder: "bolumno", bullet: false });
+  s.addText("Bölüm 5", { placeholder: "bolumno", bullet: false });
   curTitle = "Tartışma: ne başarıldı, ne eksik kaldı?";
   s.addText(curTitle, { placeholder: "title" });
   s.addText("Katkı, sınırlılıklar ve makalenin işaret ettiği sonraki adımlar", { placeholder: "teaser", bullet: false });
@@ -810,14 +1027,14 @@ section("Tartışma");
   title(s, "TEEM sahada birlikte sağlanıyor; ancak çözüm yerel ve gerçek testler 10 dronla sınırlı");
   rect(s, M, 1.5, 4.35, 3.4, { fill: C.background2, name: "Katkı" });
   text(s, "Katkı", { x: 0.7, y: 1.62, w: 4.0, h: 0.4, fontSize: SIZE.body, bold: true, color: C.accent1 });
-  text(s, bullets(["Hedef her an değiştirilebilir (hedef kovalama)", "Güvenlik planlayıcıda; üst katman göreve odaklanır", "Kod, donanım ve veri açık"]),
+  text(s, bullets(["Merkezsiz ve asenkron: tek hata noktası yok", "Hedef her an değiştirilebilir (hedef kovalama)", "Güvenlik planlayıcıda; üst katman göreve odaklanır", "Kod, donanım ve veri açık"]),
     { x: 0.7, y: 2.15, w: 4.0, h: 2.65, fontSize: SIZE.sub, paraSpaceAfter: 10 });
   rect(s, 5.15, 1.5, 4.35, 3.4, { line: C.accent2, lineW: 1.5, name: "Sınırlılıklar" });
   text(s, "Sınırlılıklar", { x: 5.35, y: 1.62, w: 4.0, h: 0.4, fontSize: SIZE.body, bold: true, color: C.accent2 });
   text(s, bullets(["Tamlık ve optimallik ispatı yok; çözüm yerel", "Dar, uzun tüp gibi geometrilerde kilitlenme riski", "Gerçek testler en çok 10 dron"]),
     { x: 5.35, y: 2.15, w: 4.0, h: 2.65, fontSize: SIZE.sub, paraSpaceAfter: 10 });
   cite(s, "Zhou vd. (2022), Tartışma; son sınırlılık maddesi sunucunun değerlendirmesidir");
-  note(s, 55, "Katkı tarafında üç şey öne çıkıyor. Birincisi, hedef uçuş sırasında istendiği an değiştirilebiliyor; bu da sistemi üst seviye karar veren yazılımlara bağlamayı kolaylaştırıyor. İkincisi, güvenlik ve fiziksel uygunluk planlayıcının içinde çözülüyor; üstteki yazılım sadece göreve odaklanabiliyor. Üçüncüsü, kod, donanım tasarımı ve veri herkese açık. Sınırlılıklarda yazarlar dürüst davranıyor. Gerçek dünya performansı için matematiksel ispattan bilerek vazgeçiyorlar; bulunan çözüm en iyisi değil, yerel olarak iyi. Dronların birbirini beklerken kilitlenmesi nadir görülüyor ama dar ve uzun bir tüp gibi özel geometrilerde olabiliyor. Son madde benim yorumum: gerçek uçuşlar en fazla 10 dronla yapıldı; 40 dron yalnızca simülasyonda.");
+  note(s, 55, "Katkı tarafında dört şey öne çıkıyor. Birincisi, sürü tamamen merkezsiz ve asenkron çalışıyor; düştüğünde herkesi durduracak tek bir bilgisayar yok. İkincisi, hedef uçuş sırasında istendiği an değiştirilebiliyor; bu da sistemi üst seviye karar veren yazılımlara bağlamayı kolaylaştırıyor. Üçüncüsü, güvenlik ve fiziksel uygunluk planlayıcının içinde çözülüyor; üstteki yazılım sadece göreve odaklanabiliyor. Dördüncüsü, kod, donanım tasarımı ve veri herkese açık. Sınırlılıklarda yazarlar dürüst davranıyor. Gerçek dünya performansı için matematiksel ispattan bilerek vazgeçiyorlar; bulunan çözüm en iyisi değil, yerel olarak iyi. Dronların birbirini beklerken kilitlenmesi nadir görülüyor ama dar ve uzun bir tüp gibi özel geometrilerde olabiliyor. Son madde benim yorumum: gerçek uçuşlar en fazla 10 dronla yapıldı; 40 dron yalnızca simülasyonda.");
 }
 
 // 37. Sonraki adımlar
@@ -852,14 +1069,14 @@ section("Tartışma");
     { text: "dar geçitlerde dolambaç yerine sıralı ve düzgün geçiş sağlanıyor.", options: { breakLine: true } },
     { text: "2.  Ceza tabanlı formülasyon genişletilebilir: ", options: { bold: true } },
     { text: "formasyon ve takip gibi görevler tek bir terimle ekleniyor.", options: { breakLine: true } },
-    { text: "3.  Sürü dış altyapıya muhtaç değil: ", options: { bold: true } },
-    { text: "300 g altı dronlar GPS, harita ve merkezi sunucu olmadan sık ormanda uçuyor." },
+    { text: "3.  Merkez yok, yalnızca paylaşılan yörüngeler var: ", options: { bold: true } },
+    { text: "her dron kendi planını yapıyor; 300 g altı sürü GPS, harita ve sunucu olmadan ormanda uçuyor." },
   ], { x: M, y: 1.05, w: 9.0, h: 3.4, fontSize: SIZE.body, color: C.background1, paraSpaceAfter: 18 });
   text(s, [
     { text: "Samed Bilgin  ·  251281053", options: { bold: true, breakLine: true } },
     { text: "Makale: doi.org/10.1126/scirobotics.abm5954  ·  Soru ve geri bildirimlerinizi bekliyorum" },
   ], { x: M, y: 4.6, w: 9.0, h: 0.7, fontSize: SIZE.small, color: C.accent6 });
-  note(s, 45, "Üç cümleyle özetleyeyim. Bir: sık bir ortamda sürü uçuşu için yörüngenin sadece şeklini değil zamanlamasını da optimize etmek gerekiyor; MINCO bunu milisaniyeler içinde mümkün kılıyor. İki: bütün gereksinimlerin ceza terimine çevrilmesi sistemi genişletilebilir yapıyor; formasyon ve takip birer terimle eklendi. Üç: bütün bunlar 300 gramın altındaki dronlara sığıyor ve sürü GPS, harita ya da merkezi bir sunucu olmadan sık bir ormanda uçabiliyor. Bilim kurgu filmleriyle başlamıştık; görünüşe göre o gelecek sandığımızdan yakın. Dinlediğiniz için teşekkürler; soru ve geri bildirimlerinizi bekliyorum. (Bu slayt soru-cevap boyunca ekranda kalsın.)");
+  note(s, 45, "Üç cümleyle özetleyeyim. Bir: sık bir ortamda sürü uçuşu için yörüngenin sadece şeklini değil zamanlamasını da optimize etmek gerekiyor; MINCO bunu milisaniyeler içinde mümkün kılıyor. İki: bütün gereksinimlerin ceza terimine çevrilmesi sistemi genişletilebilir yapıyor; formasyon ve takip birer terimle eklendi. Üç: sürünün bir merkezi yok. Her dron kendi planını yapıyor ve komşularıyla yalnızca birkaç sayılık yörüngeler paylaşıyor. Bütün bunlar 300 gramın altındaki dronlara sığıyor ve sürü GPS, harita ya da merkezi bir sunucu olmadan sık bir ormanda uçabiliyor. Bilim kurgu filmleriyle başlamıştık; görünüşe göre o gelecek sandığımızdan yakın. Dinlediğiniz için teşekkürler; soru ve geri bildirimlerinizi bekliyorum. (Bu slayt soru-cevap boyunca ekranda kalsın.)");
 }
 
 // 39. Kaynakça
@@ -929,6 +1146,14 @@ section("Ek");
   await pres.writeFile({ fileName: OUT });
   await applyTheme(OUT, THEME);
   fs.writeFileSync(path.join(__dirname, "konusma.json"), JSON.stringify(SCRIPT, null, 1), "utf8");
-  const total = SCRIPT.reduce((a, b) => a + b.sure, 0), skip = SCRIPT.filter((x) => x.atlanabilir).reduce((a, b) => a + b.sure, 0);
-  console.log("OK", OUT, "| slayt:", SCRIPT.length, "| süre ≈", Math.round(total / 60), "dk | atlanabilir ≈", Math.round(skip / 60), "dk");
+  const main = SCRIPT.filter((x) => !x.baslik.startsWith("Ek "));
+  const total = main.reduce((a, b) => a + b.sure, 0), skip = main.filter((x) => x.atlanabilir).reduce((a, b) => a + b.sure, 0);
+  const md = [
+    "# Konuşma metni: Ormanda kendi başına uçan avuç içi dron sürüsü", "",
+    "Zhou vd. (2022), Science Robotics 7, eabm5954. Sunan: Samed Bilgin · 251281053.", "",
+    `Ana slaytlarda yaklaşık ${Math.round(total / 60)} dakika; atlanabilir işaretli slaytlar geçilirse yaklaşık ${Math.round((total - skip) / 60)} dakika. Ek A ve Ek B yalnızca soru gelirse açılır. Parantez içindeki notlar sahne yönergesidir.`, "",
+  ];
+  SCRIPT.forEach((x) => md.push(`## ${x.n}. ${x.baslik}`, "", `*≈ ${x.sure} sn${x.atlanabilir ? " · zaman kısaysa atlanabilir" : ""}*`, "", x.metin, ""));
+  fs.writeFileSync(path.join(__dirname, "..", "Konusma_Metni.md"), md.join("\n"), "utf8");
+  console.log("OK", OUT, "| slayt:", SCRIPT.length, "| ana süre ≈", Math.round(total / 60), "dk | atlanabilirler geçilirse ≈", Math.round((total - skip) / 60), "dk");
 })().catch((e) => { console.error(e); process.exit(1); });
